@@ -1,0 +1,77 @@
+How many campaigns and sources does CoolTShirts use and how are they related? Be sure to explain the difference between utm_campaign and utm_source.
+1.1
+SELECT 
+	DISTINCT utm_campaign 
+  	FROM page_visits;
+1.2
+SELECT 
+	DISTINCT utm_source 
+  	FROM page_visits;
+1.3
+SELECT 
+	DISTINCT utm_campaign,
+	utm_source
+  	FROM page_visits;
+
+What pages are on their website?
+1.4
+SELECT 
+	DISTINCT page_name
+  	FROM page_visits;
+
+How many first touches is each campaign responsible for?
+2.1
+WITH first_touch AS (
+    SELECT user_id,
+        MIN(timestamp) as first_touch_at
+    FROM page_visits
+    GROUP BY user_id)
+SELECT COUNT(ft.user_id) as '# of first touches',
+		pv.utm_campaign
+FROM first_touch ft
+JOIN page_visits pv
+    ON ft.user_id = pv.user_id
+    AND ft.first_touch_at = pv.timestamp
+    GROUP BY utm_campaign
+    ORDER BY 1 DESC;
+
+How many last touches is each campaign responsible for?
+2.2
+WITH last_touch AS (
+    SELECT user_id,
+        MAX(timestamp) as last_touch_at
+    FROM page_visits
+    GROUP BY user_id)
+SELECT COUNT(lt.user_id) as '# of last touches',
+		pv.utm_campaign
+FROM last_touch lt
+JOIN page_visits pv
+    ON lt.user_id = pv.user_id
+    AND lt.last_touch_at = pv.timestamp
+    GROUP BY utm_campaign
+    ORDER BY 1 DESC;
+
+How many visitors make a purchase?
+2.3
+SELECT DISTINCT COUNT(user_id) as 'visitors',
+	(SELECT DISTINCT COUNT(user_id) 
+  FROM page_visits
+  WHERE page_name = '4 - purchase') as 'purchasers'
+	FROM page_visits;
+
+How many last touches on the purchase page is each campaign responsible for?
+2.4
+WITH last_touch AS (
+    SELECT user_id,
+        MAX(timestamp) as last_touch_at
+    FROM page_visits
+    GROUP BY user_id)
+SELECT COUNT(lt.user_id) as 'Last Touch',
+		pv.utm_campaign
+FROM last_touch lt
+JOIN page_visits pv
+    ON lt.user_id = pv.user_id
+    AND lt.last_touch_at = pv.timestamp
+    WHERE pv.page_name = '4 - purchase'
+    GROUP BY utm_campaign
+    ORDER BY 1 DESC;
